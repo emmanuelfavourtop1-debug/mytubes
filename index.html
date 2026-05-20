@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTube</title>
+    <!-- Remix Icon for UI Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Color Palette - Dark Theme */
+            --bg-color: #0f0f0f;
+            --header-bg: #0f0f0f;
+            --sidebar-bg: #0f0f0f;
+            --card-bg: #0f0f0f;
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+            --accent-color: #ff0000; /* Classic Red */
+            --hover-bg: #272727;
+            --border-color: #303030;
+            --search-bg: #121212;
+            --search-border: #303030;
+            
+            /* Dimensions */
+            --header-height: 56px;
+            --sidebar-width: 240px;
+            --sidebar-collapsed-width: 72px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* --- Scrollbar Styling --- */
+        ::-webkit-scrollbar {
+            width: 8px;
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #717171;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0a0a0;
+        }
+
+        /* --- Header --- */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--header-height);
+            background-color: var(--header-bg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 1000;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .menu-btn:hover { background-color: var(--hover-bg); }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: -0.5px;
+        }
+        .logo i { color: var(--accent-color); font-size: 1.8rem; }
+        .logo span { position: relative; top: 1px; }
+
+        .header-center {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            max-width: 700px;
+            margin: 0 20px;
+        }
+
+        .search-container {
+            display: flex;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            background-color: var(--search-bg);
+            border: 1px solid var(--search-border);
+            border-right: none;
+            border-radius: 40px 0 0 40px;
+            padding: 0 16px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            height: 40px;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #1c62b9;
+            margin-left: 0; /* prevent layout shift */
+        }
+
+        .search-btn {
+            background-color: #222;
+            border: 1px solid var(--search-border);
+            border-radius: 0 40px 40px 0;
+            padding: 0 20px;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+        .search-btn:hover { background-color: #303030; }
+
+        .mic-btn {
+            background-color: #181818;
+            border: none;
+            color: var(--text-primary);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-left: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mic-btn:hover { background-color: var(--hover-bg); }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .icon-btn:hover { background-color: var(--hover-bg); }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #555;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* --- Layout Container --- */
+        .main-container {
+            display: flex;
+            margin-top: var(--header-height);
+            min-height: calc(100vh - var(--header-height));
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
+            position: fixed;
+            height: 100%;
+            overflow-y: auto;
+            padding: 12px;
+            top: var(--header-height);
+            left: 0;
+            transition: transform 0.2s;
+        }
+
+        .sidebar-section {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+        }
+        .sidebar-section:last-child { border-bottom: none; }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .sidebar-link:hover { background-color: var(--hover-bg); }
+        .sidebar-link.active { background-color: var(--hover-bg); font-weight: bold; }
+        .sidebar-link i { font-size: 1.2rem; }
+        .sidebar-link span { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .sidebar-title {
+            padding: 8px 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        /* --- Main Content Area --- */
+        .content {
+            margin-left: var(--sidebar-width); /* Offset for sidebar */
+            width: 100%;
+            padding: 0 24px 24px 24px;
+        }
+
+        /* --- Category Chips --- */
+        .categories {
+            position: sticky;
+            top: var(--header-height);
+            background-color: var(--bg-color);
+            z-index: 900;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            white-space: nowrap;
+            /* Hide scrollbar for categories */
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+        }
+        .categories::-webkit-scrollbar { display: none; }
+
+        .chip {
+            background-color: #272727;
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            transition: background 0.2s;
+            font-weight: 500;
+        }
+        .chip:hover { background-color: #3f3f3f; }
+        .chip.active { background-color: var(--text-primary); color: var(--bg-color); }
+
+        /* --- Video Grid --- */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            row-gap: 40px;
+        }
+
+        /* --- Video Card --- */
+        .video-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .thumbnail-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: #222;
+        }
+
+        .thumbnail-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .video-card:hover .thumbnail-container img {
+            transform: scale(1.05);
+        }
+
+        .duration {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            font-size: 0.75rem;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .video-info {
+            display: flex;
+            gap: 12px;
+        }
+
+        .channel-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #333;
+            flex-shrink: 0;
+        }
+        .channel-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+
+        .video-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-title {
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .channel-name, .video-meta {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+        
+        .channel-name:hover { color: var(--text-primary); }
+
+        /* --- Responsive Queries --- */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: var(--sidebar-collapsed-width);
+            }
+            .sidebar-link span, .sidebar-title {
+                display: none;
+            }
+            .sidebar-link {
+                justify-content: center;
+                padding: 12px;
+            }
+            .sidebar-section { border-bottom: none; }
+            
+            .content {
+                margin-left: var(--sidebar-collapsed-width);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; } /* Hide sidebar completely on small screens */
+            .content { margin-left: 0; padding: 0 16px 16px 16px; }
+            .search-container { display: none; } /* Hide search bar on mobile for simple layout */
+            .mic-btn { display: none; }
+            .header-right { margin-left: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header / Navbar -->
+    <header class="header">
+        <div class="header-left">
+            <button class="menu-btn" aria-label="Menu">
+                <i class="ri-menu-line"></i>
+            </button>
+            <a href="#" class="logo">
+                <i class="ri-youtube-fill"></i>
+                <span>MyTube</span>
+            </a>
+        </div>
+
+        <div class="header-center">
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Search">
+                <button class="search-btn" aria-label="Search">
+                    <i class="ri-search-line"></i>
+                </button>
+            </div>
+            <button class="mic-btn" aria-label="Search with voice">
+                <i class="ri-mic-line"></i>
+            </button>
+        </div>
+
+        <div class="header-right">
+            <button class="icon-btn" aria-label="Create">
+                <i class="ri-video-add-line"></i>
+            </button>
+            <button class="icon-btn" aria-label="Notifications">
+                <i class="ri-notification-3-line"></i>
+            </button>
+            <div class="user-avatar" title="My Account">
+                <img src="https://picsum.photos/seed/useravatar/100/100" alt="User Avatar">
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-link active">
+                    <i class="ri-home-5-fill"></i>
+                    <span>Home</span>
+                </div>
+                <div class="sidebar-link">
+                    <i class="ri-fire-fill"></i>
+                    <span>Shorts</span>
+                </div>
+                <div class="sidebar-link">
+                    <i class="ri-clapperboard-fill"></i>
+                    <span>Subscriptions</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">You</h3>
+                <div class="sidebar-link">
+                    <i class="ri-user-3-line"></i>
+                    <span>Your Channel</span>
+                </div>
+                <div class="sidebar-link">
+                    <i class="ri-history-line"></i>
+                    <span>History</span>
+                </div>
+                <div class="sidebar-link">
+                    <i class="ri-play-list-add-line"></i>
+                    <span>Playlists</span>
+                </div>
+                <div class="sidebar-link">
+                    <i class="ri-clock-line"></i>
+                    <span>Watch Later</span>
+                </div>
+                <div class="sidebar-link">
+                    <i class="ri-thumb-up-line"></i>
+                    <span>Liked Videos</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Explore</h3>
+                <div class="sidebar-link">
+                    <i class="ri-fire-line"></i>
+                    <span>Trending</span>
+                </div>
+                <div class="sidebar-link">
+                    <i class="ri-music-2-line"></i>
+                    <span>Music</span>
+                </div>
+                <div class="sidebar-link">
+                    <i class="ri-gamepad-line"></i>
+                    <span>Gaming</span>
+                </div>
+                <div class="sidebar-link">
+                    <i class="ri-newspaper-line"></i>
+                    <span>News</span>
+                </div>
+                <div class="sidebar-link">
+                    <i class="ri-trophy-line"></i>
+                    <span>Sports</span>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-link">
+                    <i class="ri-settings-4-line"></i>
+                    <span>Settings</span>
+                </div>
+                <div class="sidebar-link">
+                    <i class="ri-flag-line"></i>
+                    <span>Report History</span>
+                </div>
+                <div class="sidebar-link">
+                    <i class="ri-question-line"></i>
+                    <span>Help</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            
+            <!-- Category Chips -->
+            <div class="categories">
+                <button class="chip active">All</button>
+                <button class="chip">Gaming</button>
+                <button class="chip">Music</button>
+                <button class="chip">Live</button>
+                <button class="chip">Computer Programming</button>
+                <button class="chip">Podcasts</button>
+                <button class="chip">News</button>
+                <button class="chip">Cooking</button>
+                <button class="chip">Recently Uploaded</button>
+                <button class="chip">New to you</button>
+                <button class="chip">Sketch Comedy</button>
+                <button class="chip">AI Tools</button>
+            </div>
+
+            <!-- Video Grid -->
+            <div class="video-grid">
+
+                <!-- Video 1 -->
+                <article class="video-card">
+                    <div class="thumbnail-container">
+                        <img src="https://picsum.photos/seed/tech1/600/340" alt="Video Thumbnail">
+                        <span class="duration">12:45</span>
+                    </div>
+                    <div class="video-info">
+                        <div class="channel-avatar">
+                            <img src="https://picsum.photos/seed/avatar1/100/100" alt="Channel Avatar">
+                        </div>
+                        <div class="video-details">
+                            <h3 class="video-title">Building a YouTube Clone in HTML & CSS Only</h3>
+                            <div class="channel-name">Code Master</div>
+                            <div class="video-meta">1.2M views • 2 days ago</div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Video 2 -->
+                <article class="video-card">
+                    <div class="thumbnail-container">
+                        <img src="https://picsum.photos/seed/nature2/600/340" alt="Video Thumbnail">
+                        <span class="duration">3:10</span>
+                    </div>
+                    <div class="video-info">
+                        <div class="channel-avatar">
+                            <img src="https://picsum.photos/seed/avatar2/100/100" alt="Channel Avatar">
+                        </div>
+                        <div class="video-details">
+                            <h3 class="video-title">Relaxing Rain Sounds for Sleep & Focus</h3>
+                            <div class="channel-name">Nature Vibes</div>
+                            <div class="video-meta">850K views • 1 week ago</div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Video 3 -->
+                <article class="video-card">
+                    <div class="thumbnail-container">
+                        <img src="https://picsum.photos/seed/food3/600/340" alt="Video Thumbnail">
+                        <span class="duration">24:05</span>
+                    </div>
+                    <div class="video-info">
+                        <div class="channel-avatar">
+                            <img src="https://picsum.photos/seed/avatar3/100/100" alt="Channel Avatar">
+                        </div>
+                        <div class="video-details">
+                            <h3 class="video-title">Ultimate Guide to Italian Pasta Making</h3>
+                            <div class="channel-name">Chef Mario</div>
+                            <div class="video-meta">2.1M views • 3 months ago</div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Video 4 -->
+                <article class="video-card">
+                    <div class="thumbnail-container">
+                        <img src="https://picsum.photos/seed/gaming4/600/340" alt="Video Thumbnail">
+                        <span class="duration">45:20</span>
+                    </div>
+                    <div class="video-info">
+                        <div class="channel-avatar">
+                            <img src="https://picsum.photos/seed/avatar4/100/100" alt="Channel Avatar">
+                        </div>
+                        <div class="video-details">
+                            <h3 class="video-title">Pro Gamer Setup Tour 2024 - The Ultimate Battlestation</h3>
+                            <div class="channel-name">Tech & Games</div>
+                            <div class="video-meta">500K views • 5 hours ago</div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Video 5 -->
+                <article class="video-card">
+                    <div class="thumbnail-container">
+                        <img src="https://picsum.photos/seed/travel5/600/340" alt="Video Thumbnail">
+                        <span class="duration">18:30</span>
+                    </div>
+                    <div class="video-info">
+                        <div class="channel-avatar">
+                            <img src="https://picsum.photos/seed/avatar5/100/100" alt="Channel Avatar">
+                        </div>
+                        <div class="video-details">
+                            <h3 class="video-title">I Traveled to Japan and it was Insane! (Vlog)</h3>
+                            <div class="channel-name">Wanderlust Soul</div>
+                            <div class="video-meta">3.4M views • 1 year ago</div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Video 6 -->
+                <article class="video-card">
+                    <div class="thumbnail-container">
+                        <img src="https://picsum.photos/seed/music6/600/340" alt="Video Thumbnail">
+                        <span class="duration">4:05</span>
+                    </div>
+                    <div class="video-info">
+                        <div class="channel-avatar">
+                            <img src="https://picsum.photos/seed/avatar6/100/100" alt="Channel Avatar">
+                        </div>
+                        <div class="video-details">
+                            <h3 class="video-title">Lofi Hip Hop Radio - Beats to Relax/Study To</h3>
+                            <div class="channel-name">Lofi Girl</div>
+                            <div class="video-meta">12K watching</div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Video 7 -->
+                <article class="video-card">
+                    <div class="thumbnail-container">
+                        <img src="https://picsum.photos/seed/auto7/600/340" alt="Video Thumbnail">
+                        <span class="duration">10:15</span>
+                    </div>
+                    <div class="video-info">
+                        <div class="channel-avatar">
+                            <img src="https://picsum.photos/seed/avatar7/100/100" alt="Channel Avatar">
+                        </div>
+                        <div class="video-details">
+                            <h3 class="video-title">Restoring a 1969 Mustang - Part 1</h3>
+                            <div class="channel-name">Classic Garage</div>
+                            <div class="video-meta">300K views • 2 weeks ago</div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Video 8 -->
+                <article class="video-card">
+                    <div class="thumbnail-container">
+                        <img src="https://picsum.photos/seed/space8/600/340" alt="Video Thumbnail">
+                        <span class="duration">22:45</span>
+                    </div>
+                    <div class="video-info">
+                        <div class="channel-avatar">
+                            <img src="https://picsum.photos/seed/avatar8/100/100" alt="Channel Avatar">
+                        </div>
+                        <div class="video-details">
+                            <h3 class="video-title">The Universe: What's Inside a Black Hole?</h3>
+                            <div class="channel-name">Space Science</div>
+                            <div class="video-meta">5M views • 4 years ago</div>
+                        </div>
+                    </div>
+                </article>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Minimal script to handle active state on category chips
+        const chips = document.querySelectorAll('.chip');
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                // Remove active class from all
+                chips.forEach(c => c.classList.remove('active'));
+                // Add to clicked
+                chip.classList.add('active');
+            });
+        });
+
+        // Minimal script for mobile menu toggle (for demonstration)
+        const menuBtn = document.querySelector('.menu-btn');
+        const sidebar = document.querySelector('.sidebar');
+        
+        menuBtn.addEventListener('click', () => {
+            // Simple toggle for demo purposes
+            // In a real app, this would handle overlay and states better
+            if(window.innerWidth <= 1024) {
+                if(sidebar.style.display === 'flex') {
+                    sidebar.style.display = 'none';
+                } else {
+                    sidebar.style.display = 'flex';
+                    sidebar.style.position = 'fixed';
+                    sidebar.style.zIndex = '2000';
+                    sidebar.style.width = '240px';
+                    // Show text spans when forced open on mobile/tablet
+                    const spans = sidebar.querySelectorAll('span, .sidebar-title');
+                    spans.forEach(s => s.style.display = 'block');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
